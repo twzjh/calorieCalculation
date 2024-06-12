@@ -15,24 +15,44 @@ function isInvalidInput(str) {
     const regex = /\d+e\d+/i;
     return str.match(regex);
 }
-
-function addEntry() {
+// 新增欄位
+addEntryButton.addEventListener('click', () => {
     const targetInputContainer = document.querySelector(`#${entryDropdown.value} .input-container`);
     const entryNumber = targetInputContainer.querySelectorAll('input[type="text"]').length + 1;
-    const HTMLString = 
-    `<label for="name">名稱</label>
-    <input type="text" id="name" placeholder="名稱" />
-    <label for="calories">數字</label>
+    const HTMLString =
+    `
+    <label for="name-${entryNumber}">名稱</label>
+    <input type="text" id="name-${entryNumber}" placeholder="名稱" />
+    <label for="calories-${entryNumber}">數字</label>
     <input
     type="number"
     min="0"
-    id="calories"
+    id="calories-${entryNumber}"
     placeholder="卡路里"/>
     `;
     targetInputContainer.insertAdjacentHTML('beforeend', HTMLString);
+});
+
+// 欄位熱量加總
+function getCaloriesFromInputs(list) {
+    let calories = 0;
+
+    for (const item of list) {
+        const currVal = cleanInputString(item.value);
+        const invalidInputMatch = isInvalidInput(currVal);
+
+        if (invalidInputMatch) {
+            alert(`Invalid Input: ${invalidInputMatch[0]}`);
+            isError = true;
+            return null;
+        }
+        calories += Number(currVal);
+    }
+    return calories;
 }
 
-function calculateCalories(e) {
+// 計算和顯示一日攝取熱量
+calorieCounter.addEventListener('submit', (e)=>{
     e.preventDefault();
     isError = false;
 
@@ -55,36 +75,22 @@ function calculateCalories(e) {
 
     const consumedCalories = breakfastCalories + lunchCalories + dinnerCalories + snacksCalories;
     const remainingCalories = budgetCalories - consumedCalories + exerciseCalories;
-    const surplusOrDeficit = remainingCalories < 0 ? 'Surplus' : 'Deficit';
-    output.innerHTML = 
-    `<span class="${surplusOrDeficit.toLowerCase()}">${Math.abs(remainingCalories)} Calorie ${surplusOrDeficit}</span>
+    const surplusOrDeficit = remainingCalories < 0 ? '盈餘' : '赤字';
+    const cssClass = remainingCalories < 0 ? 'deficit' : 'surplus';
+    output.innerHTML =
+        `
+    <p>所需的熱量 ${budgetCalories} 卡路里 </p>
+    <p>攝取的熱量 ${consumedCalories} 卡路里</p>
+    <p>燃燒的熱量 ${exerciseCalories} 卡路里</p>
     <hr>
-    <p>${budgetCalories} 所需的熱量</p>
-    <p>${consumedCalories} 攝取的熱量</p>
-    <p>${exerciseCalories} 燃燒的熱量</p>
+    <span class="${cssClass}">${Math.abs(remainingCalories)} 熱量${surplusOrDeficit}</span>
     `;
 
     output.classList.remove('hide');
-}
+});
 
-function getCaloriesFromInputs(list) {
-    let calories = 0;
-
-    for (const item of list) {
-        const currVal = cleanInputString(item.value);
-        const invalidInputMatch = isInvalidInput(currVal);
-
-        if (invalidInputMatch) {
-            alert(`Invalid Input: ${invalidInputMatch[0]}`);
-            isError = true;
-            return null;
-        }
-        calories += Number(currVal);
-    }
-    return calories;
-}
-
-function clearForm() {
+//清除欄位
+clearButton.addEventListener('click', () => {
     const inputContainers = Array.from(document.querySelectorAll('.input-container'));
 
     for (const container of inputContainers) {
@@ -94,8 +100,4 @@ function clearForm() {
     budgetNumberInput.value = '';
     output.innerText = '';
     output.classList.add('hide');
-}
-
-addEntryButton.addEventListener("click", addEntry);
-calorieCounter.addEventListener("submit", calculateCalories);
-clearButton.addEventListener("click", clearForm);
+});
